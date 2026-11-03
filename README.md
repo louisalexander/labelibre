@@ -9,6 +9,7 @@
 [![macOS](https://img.shields.io/badge/macOS-12%2B-000000?style=for-the-badge&logo=apple&logoColor=white)](#-install)
 [![Python](https://img.shields.io/badge/python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Bluetooth LE](https://img.shields.io/badge/Bluetooth-LE-0082FC?style=for-the-badge&logo=bluetooth&logoColor=white)](https://github.com/hbldh/bleak)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22C55E?style=for-the-badge)](LICENSE)
 [![Printer](https://img.shields.io/badge/SUPVAN-T50M%20Pro-FF6B35?style=for-the-badge&logo=printer&logoColor=white)](#-supported-hardware)
 
 [![bleak](https://img.shields.io/badge/bleak-%E2%89%A51.0-5A29E4?style=flat-square)](https://github.com/hbldh/bleak)
@@ -136,6 +137,10 @@ The protocol knowledge comes from community reverse engineering of the Katasymbo
 ## 🤝 Contributing
 
 Got a different SUPVAN model working? Added text or barcode rendering? Open a PR.
+
+## 📄 License
+
+[MIT](LICENSE) © 2026 Louis Alexander
 
 ---
 

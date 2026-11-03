@@ -1,0 +1,3 @@
+bleak>=1.0
+pillow>=10
+aiohttp>=3.9

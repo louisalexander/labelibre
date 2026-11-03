@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Label Printer</title>
+<style>
+:root{
+  --bg:#f5f5f2; --panel:#ffffff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e2e1dc;
+  --accent:#2f6f4f; --accent-ink:#fff; --warn:#a4451a; --ok:#2f6f4f; --label:#fff;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#171716; --panel:#212120; --ink:#ecebe6; --muted:#9d9c95; --line:#33332f;
+    --accent:#5fb98a; --accent-ink:#0f1a14; --warn:#e48a5f; --ok:#5fb98a; --label:#f4f3ee;
+    --shadow:0 1px 2px rgba(0,0,0,.4); }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:-.01em}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--line);border-radius:99px;font-size:12.5px;color:var(--muted);cursor:pointer;background:transparent}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--warn)} .dot.wait{animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.spacer{flex:1}
+button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 13px;border-radius:8px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.45;cursor:default}
+main{display:grid;grid-template-columns:1fr 280px;gap:0;min-height:calc(100vh - 57px)}
+.work{padding:20px 24px 120px}
+aside{border-left:1px solid var(--line);background:var(--panel);padding:20px;position:sticky;top:57px;height:calc(100vh - 57px);overflow:auto}
+aside h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px;font-weight:600}
+.field{margin-bottom:18px}
+.field label{display:flex;justify-content:space-between;font-weight:550;margin-bottom:6px}
+.field small{color:var(--muted);display:block;margin-top:4px;font-size:12px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.field label.check{display:flex;justify-content:flex-start;gap:8px;align-items:center;font-weight:550;cursor:pointer}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--muted);transition:.15s;margin-bottom:18px}
+.drop.over{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.drop .btns{margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.toolbar .count{color:var(--muted);margin-right:auto}
+input[type=search]{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);width:220px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:var(--shadow);position:relative;transition:.12s}
+.card.off{opacity:.5}
+.card .img{background:var(--label);border-radius:6px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--line);cursor:pointer}
+.card img{width:100%;height:100%;object-fit:contain}
+.card .name{font-size:12.5px;margin:8px 2px 6px;word-break:break-word;line-height:1.3;min-height:2.6em}
+.card .row{display:flex;align-items:center;gap:6px}
+.card .sel{accent-color:var(--accent);width:16px;height:16px}
+.stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;margin-left:auto}
+.stepper button{border:0;padding:3px 9px;background:transparent}
+.stepper input{width:38px;text-align:center;border:0;background:transparent;color:var(--ink);font:inherit;-moz-appearance:textfield}
+.stepper input::-webkit-inner-spin-button{display:none}
+.x{position:absolute;top:6px;right:6px;border:0;background:var(--panel);border-radius:50%;width:22px;height:22px;padding:0;line-height:22px;opacity:0;color:var(--muted)}
+.card:hover .x{opacity:.9}
+.warn{color:var(--warn);font-size:11.5px}
+.empty{color:var(--muted);text-align:center;padding:40px 0}
+.bar{position:fixed;left:0;right:280px;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:14px;z-index:4}
+.prog{flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden;display:none}
+.prog>div{height:100%;width:0;background:var(--accent);transition:width .3s}
+.msg{color:var(--muted);font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msg.err{color:var(--warn)}
+details{margin-top:8px;font-size:12px;color:var(--muted)}
+pre{white-space:pre-wrap;font-size:11.5px;max-height:220px;overflow:auto}
+dialog{border:0;border-radius:14px;padding:16px;background:var(--panel);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.3)}
+dialog img{width:min(80vw,640px);image-rendering:pixelated;background:#fff;border-radius:6px;display:block}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+@media (max-width:760px){main{grid-template-columns:1fr} aside{position:static;height:auto;border-left:0;border-top:1px solid var(--line)} .bar{right:0} .work{padding:16px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Label Printer</h1>
+  <span class="muted" style="color:var(--muted);font-size:12.5px">SUPVAN T50M Pro</span>
+  <div class="spacer"></div>
+  <button class="pill" id="statusBtn" title="Check printer"><span class="dot" id="dot"></span><span id="statusText">Check printer</span></button>
+</header>
+<main>
+  <section class="work">
+    <div class="drop" id="drop">
+      Drop <b>.aml</b> label files or a folder here
+      <div class="btns">
+        <button id="addFiles">Add files…</button>
+        <button id="addFolder">Add folder…</button>
+      </div>
+      <input type="file" id="fileIn" accept=".aml" multiple hidden>
+      <input type="file" id="dirIn" webkitdirectory multiple hidden>
+    </div>
+    <div class="toolbar" id="toolbar" hidden>
+      <span class="count" id="count"></span>
+      <input type="search" id="filter" placeholder="Filter by name">
+      <button id="selAll">Select all</button>
+      <button id="selNone">Select none</button>
+      <button id="clearAll">Remove all</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty">No labels loaded yet.</div>
+  </section>
+  <aside>
+    <h2>Print settings</h2>
+    <div class="field">
+      <label>Darkness <span id="densityV">8</span></label>
+      <input type="range" id="density" min="1" max="15" value="8">
+      <small>Higher burns darker. 8 is a good default.</small>
+    </div>
+    <div class="field">
+      <label>Black/white cutoff <span id="thresholdV">200</span></label>
+      <input type="range" id="threshold" min="60" max="250" value="200">
+      <small>Raise it if light grey text disappears; lower it if text gets blobby.</small>
+    </div>
+    <div class="field"><label class="check"><input type="checkbox" id="dither"> Dither greys (for photos)</label></div>
+    <div class="field"><label class="check"><input type="checkbox" id="rotate180"> Rotate 180°</label></div>
+    <h2 style="margin-top:26px">Printer</h2>
+    <div id="printerInfo" style="color:var(--muted);font-size:13px">Not checked yet.</div>
+    <details><summary>Activity log</summary><pre id="log"></pre></details>
+  </aside>
+</main>
+<div class="bar">
+  <div class="msg" id="msg">Select labels and press Print.</div>
+  <div class="prog" id="prog"><div></div></div>
+  <button id="cancelBtn" hidden>Cancel</button>
+  <button class="primary" id="printBtn" disabled>Print</button>
+</div>
+<dialog id="dlg"><img id="dlgImg" alt=""><div id="dlgName" style="margin-top:8px;font-size:13px"></div></dialog>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const labels = []; // {id,name,copies,selected,warnings}
+const KEY = 'labelprinter.settings';
+
+function settings() {
+  return { density: +$('density').value, threshold: +$('threshold').value,
+           rotate180: $('rotate180').checked, dither: $('dither').checked };
+}
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || '{}');
+    if (s.density) $('density').value = s.density;
+    if (s.threshold) $('threshold').value = s.threshold;
+    $('rotate180').checked = !!s.rotate180; $('dither').checked = !!s.dither;
+  } catch {}
+  $('densityV').textContent = $('density').value; $('thresholdV').textContent = $('threshold').value;
+}
+function saveSettings() { try { localStorage.setItem(KEY, JSON.stringify(settings())); } catch {} }
+function qs() { const s = settings(); return `threshold=${s.threshold}&rotate180=${s.rotate180}&dither=${s.dither}`; }
+
+async function addFiles(fileList) {
+  const files = [...fileList].filter(f => f.name.toLowerCase().endsWith('.aml'));
+  if (!files.length) { setMsg('No .aml files found in that selection.', true); return; }
+  setMsg(`Loading ${files.length} file(s)…`);
+  for (let i = 0; i < files.length; i += 25) {
+    const fd = new FormData();
+    files.slice(i, i + 25).forEach(f => fd.append('files', f, f.name));
+    const r = await fetch('/api/upload', { method: 'POST', body: fd }).then(r => r.json());
+    for (const a of r.added) labels.push({ ...a, copies: 1, selected: true });
+    if (r.errors.length) setMsg(r.errors.join('; '), true);
+  }
+  labels.sort((a, b) => a.name.localeCompare(b.name));
+  render();
+  if (!$('msg').classList.contains('err')) setMsg(`${labels.length} label(s) loaded.`);
+}
+
+function visible() {
+  const f = $('filter').value.trim().toLowerCase();
+  return labels.filter(l => !f || l.name.toLowerCase().includes(f));
+}
+
+function render() {
+  const g = $('grid'); g.innerHTML = '';
+  const q = qs();
+  for (const l of visible()) {
+    const c = document.createElement('div');
+    c.className = 'card' + (l.selected ? '' : ' off');
+    c.innerHTML = `
+      <button class="x" title="Remove">×</button>
+      <div class="img"><img loading="lazy" alt=""></div>
+      <div class="name"></div>
+      ${l.warnings.length ? `<div class="warn">Ignored: ${l.warnings.join(', ')}</div>` : ''}
+      <div class="row">
+        <input type="checkbox" class="sel" title="Include in print">
+        <div class="stepper"><button data-d="-1">−</button><input type="number" min="0" max="999"><button data-d="1">+</button></div>
+      </div>`;
+    c.querySelector('img').src = `/api/preview/${l.id}.png?${q}`;
+    c.querySelector('.name').textContent = l.name;
+    const sel = c.querySelector('.sel'); sel.checked = l.selected;
+    sel.onchange = () => { l.selected = sel.checked; c.classList.toggle('off', !l.selected); summary(); };
+    const num = c.querySelector('.stepper input'); num.value = l.copies;
+    num.oninput = () => { l.copies = Math.max(0, Math.min(999, parseInt(num.value) || 0)); summary(); };
+    c.querySelectorAll('.stepper button').forEach(b => b.onclick = () => {
+      l.copies = Math.max(0, Math.min(999, l.copies + +b.dataset.d)); num.value = l.copies; summary();
+    });
+    c.querySelector('.x').onclick = async () => {
+      labels.splice(labels.indexOf(l), 1); render();
+      fetch(`/api/labels/${l.id}`, { method: 'DELETE' });
+    };
+    c.querySelector('.img').onclick = () => {
+      $('dlgImg').src = `/api/preview/${l.id}.png?${qs()}`; $('dlgName').textContent = l.name; $('dlg').showModal();
+    };
+    g.appendChild(c);
+  }
+  $('empty').hidden = labels.length > 0;
+  $('toolbar').hidden = labels.length === 0;
+  summary();
+}
+
+function total() { return labels.filter(l => l.selected).reduce((n, l) => n + l.copies, 0); }
+function summary() {
+  const t = total(), sel = labels.filter(l => l.selected).length;
+  $('count').textContent = `${labels.length} label file(s) · ${sel} selected`;
+  if (!running) { $('printBtn').textContent = t ? `Print ${t} label${t === 1 ? '' : 's'}` : 'Print'; $('printBtn').disabled = !t; }
+}
+
+function setMsg(t, err = false) { $('msg').textContent = t; $('msg').classList.toggle('err', err); }
+
+let running = false, pollTimer = null;
+async function startPrint() {
+  const items = labels.filter(l => l.selected && l.copies > 0).map(l => ({ id: l.id, copies: l.copies }));
+  const r = await fetch('/api/print', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items, settings: settings() }) });
+  const j = await r.json();
+  if (!r.ok) { setMsg(j.error || 'Could not start printing', true); return; }
+  running = true; $('printBtn').disabled = true; $('printBtn').textContent = 'Printing…';
+  $('cancelBtn').hidden = false; $('prog').style.display = 'block'; setMsg('Connecting to printer…');
+}
+
+async function poll() {
+  try {
+    const p = await fetch('/api/progress').then(r => r.json());
+    $('log').textContent = p.log.join('\n');
+    if (p.running) {
+      running = true;
+      $('prog').style.display = 'block'; $('cancelBtn').hidden = false; $('printBtn').disabled = true;
+      $('prog').firstElementChild.style.width = (p.total ? 100 * p.done / p.total : 0) + '%';
+      if (p.current) setMsg(`Printing ${p.done + 1} of ${p.total}: ${p.current}`);
+    } else if (running) {
+      running = false; $('cancelBtn').hidden = true; $('prog').style.display = 'none';
+      if (p.error) setMsg(`Stopped after ${p.done} of ${p.total}: ${p.error}`, true);
+      else setMsg(p.done === p.total ? `Printed ${p.done} label${p.done === 1 ? '' : 's'}.` : `Cancelled after ${p.done} of ${p.total}.`);
+      summary(); checkStatus();
+    }
+  } catch { setMsg('Lost contact with the Label Printer app. Reopen it from Applications.', true); }
+}
+
+async function checkStatus() {
+  if (running) return;
+  $('dot').className = 'dot wait'; $('statusText').textContent = 'Checking…';
+  try {
+    const s = await fetch('/api/status').then(r => r.json());
+    if (s.busy) { $('dot').className = 'dot ok'; $('statusText').textContent = 'Printing'; return; }
+    if (!s.connected) {
+      $('dot').className = 'dot bad'; $('statusText').textContent = 'Printer not found';
+      $('printerInfo').textContent = s.error; return;
+    }
+    const bad = s.problems.length;
+    $('dot').className = 'dot ' + (bad ? 'bad' : 'ok');
+    $('statusText').textContent = bad ? s.problems[0] : 'Ready';
+    const m = s.material || {};
+    $('printerInfo').innerHTML = '';
+    const lines = [s.name];
+    if (m.width_mm) lines.push(`Labels: ${m.width_mm} × ${m.length_mm} mm, ${m.remaining} left`);
+    if (s.low_battery) lines.push('Battery low');
+    if (bad) lines.push('Problem: ' + s.problems.join(', '));
+    lines.forEach(t => { const d = document.createElement('div'); d.textContent = t; $('printerInfo').appendChild(d); });
+  } catch { $('dot').className = 'dot bad'; $('statusText').textContent = 'App not responding'; }
+}
+
+// wiring
+$('addFiles').onclick = () => $('fileIn').click();
+$('addFolder').onclick = () => $('dirIn').click();
+$('fileIn').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+$('dirIn').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+$('printBtn').onclick = startPrint;
+$('cancelBtn').onclick = () => { fetch('/api/cancel', { method: 'POST' }); setMsg('Cancelling after the current label…'); };
+$('statusBtn').onclick = checkStatus;
+$('filter').oninput = render;
+$('selAll').onclick = () => { visible().forEach(l => l.selected = true); render(); };
+$('selNone').onclick = () => { visible().forEach(l => l.selected = false); render(); };
+$('clearAll').onclick = () => { labels.splice(0).forEach(l => fetch(`/api/labels/${l.id}`, { method: 'DELETE' })); render(); };
+$('dlg').onclick = () => $('dlg').close();
+let rt;
+for (const id of ['density', 'threshold', 'rotate180', 'dither']) {
+  $(id).addEventListener('input', () => {
+    $('densityV').textContent = $('density').value; $('thresholdV').textContent = $('threshold').value;
+    saveSettings();
+    if (id !== 'density') { clearTimeout(rt); rt = setTimeout(render, 250); }
+  });
+}
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); if (ev === 'drop' || e.target === drop) drop.classList.remove('over'); }));
+document.addEventListener('drop', async (e) => {
+  const items = [...(e.dataTransfer.items || [])].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+  if (!items.length) return addFiles(e.dataTransfer.files);
+  const files = [];
+  async function walk(entry) {
+    if (entry.isFile) files.push(await new Promise(r => entry.file(r)));
+    else if (entry.isDirectory) {
+      const rd = entry.createReader();
+      let batch;
+      do { batch = await new Promise(r => rd.readEntries(r)); for (const b of batch) await walk(b); } while (batch.length);
+    }
+  }
+  for (const it of items) await walk(it);
+  addFiles(files);
+});
+
+loadSettings();
+fetch('/api/labels').then(r => r.json()).then(ls => { for (const a of ls) labels.push({ ...a, copies: 1, selected: true }); render(); });
+render(); checkStatus();
+setInterval(poll, 700); poll();
+</script>
+</body>
+</html>
